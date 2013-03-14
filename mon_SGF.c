@@ -6,6 +6,9 @@
 
 #include "mon_SGF.h"
 
+#define _NB_MAX_INOEUDS_	10
+#define _TAILLE_BLOC_		64
+#define _NB_MAX_BLOCS_		64
 
 /********************************************************************************/
 /* affiche_erreur : affiche un message d'erreur en fonction de "num_erreur".	*/
@@ -66,9 +69,12 @@ int ecrire_superbloc ( SGF_t *mon_SGF)
 /* Renvoie 0 si tout va bien ou un code d'erreur sinon.				*/
 /********************************************************************************/
 
-int lire_superbloc ( SGF_t *mon_SGF)
+int lire_superbloc ( SGF_t *mon_SGF) /* TODO TEST ME */
 {
-/* 	A FAIRE 	*/
+    assert( mon_SGF != NULL && mon_SGF->superbloc != NULL );		/* DEBUG*/
+	if(read(mon_SGF->device_num, mon_SGF->superbloc, sizeof(superbloc_t)) < sizeof(superbloc_t))
+		return EXIT_READ_PB;
+
     return 0;					/* tout va bien */
 }
 
@@ -102,9 +108,15 @@ int ecrire_table_inoeuds ( SGF_t *mon_SGF)
 /* Renvoie 0 si tout va bien ou un code d'erreur sinon.				*/
 /********************************************************************************/
 
-int lire_table_inoeuds ( SGF_t *mon_SGF)
+int lire_table_inoeuds ( SGF_t *mon_SGF) /* TODO TEST ME */
 {
- /* 	A FAIRE 	*/
+    assert( mon_SGF != NULL && mon_SGF->superbloc != NULL && mon_SGF->table_inoeuds != NULL );		/* DEBUG*/
+	/* avance jusqu'au bloc 1 */
+    lseek(mon_SGF->device_num, mon_SGF->superbloc->taille_bloc, SEEK_SET);
+    if (read(mon_SGF->device_num, mon_SGF->table_inoeuds, mon_SGF->superbloc->nb_max_inoeuds * sizeof(inoeud_t))
+		< mon_SGF->superbloc->nb_max_inoeuds * sizeof(inoeud_t))
+		return EXIT_READ_PB;
+
    return 0;				/* tout va bien */
 }
 
@@ -116,9 +128,33 @@ int lire_table_inoeuds ( SGF_t *mon_SGF)
 /* Renvoie 0 si tout va bien ou un code d'erreur sinon.				*/
 /********************************************************************************/
 
-int lire_SGF ( SGF_t *mon_SGF)
+int lire_SGF ( SGF_t *mon_SGF) /*  TODO TEST ME */
 {
-/* 	A FAIRE 	*/
+	assert(mon_SGF != NULL); /*  DEBUG */
+
+	if(mon_SGF->superbloc == NULL) {
+		mon_SGF->superbloc = malloc(sizeof(superbloc_t));
+	}
+
+	if(mon_SGF->table_inoeuds == NULL) {
+		mon_SGF->table_inoeuds = malloc(sizeof(inoeud_t));
+	}
+
+	if(mon_SGF->superbloc == NULL || mon_SGF->table_inoeuds == NULL) {
+		return EXIT_MEM_ALLOC;
+	}
+
+	mon_SGF->superbloc->nb_max_inoeuds = _NB_MAX_INOEUDS_;
+	mon_SGF->superbloc->taille_du_SF = _NB_MAX_BLOCS_;
+    mon_SGF->superbloc->taille_bloc = _TAILLE_BLOC_;
+	/*  FIXME offset de 1 */
+    mon_SGF->superbloc->premier_bloc_libre = 2 + (mon_SGF->superbloc->nb_max_inoeuds * sizeof(inoeud_t) -1)/mon_SGF->superbloc->taille_bloc; 
+
+	/*  
+	mon_SGF->table_inoeuds->type_de_fichier = TYPE_DE_FICHIER;
+	mon_SGF->table_inoeuds->taille = TAILLE;
+	mon_SGF->table_inoeuds->liens_directs_blocs = LIENS_DIRECTS_BLOCS;
+*/
     return 0;							/* tout va bien */
 }
 
@@ -131,10 +167,19 @@ int lire_SGF ( SGF_t *mon_SGF)
 /*  pour d'autres opérations sur le SGF.					*/
 /********************************************************************************/
 
-SGF_t * ouvrir_SGF ()
+SGF_t * ouvrir_SGF () /*  TODO TEST ME */
 {
-/* 	A FAIRE 	*/
-    return NULL;
+	SGF_t* sgf;
+	sgf = malloc(sizeof(SGF_t));
+	if(sgf == NULL) {
+		exit(EXIT_MEM_ALLOC);
+	}
+	sgf->device_num = open(DEVICE_NAME, O_RDWR); /* Ouverture du fichier*/
+	sgf->superbloc = NULL;
+	sgf->table_inoeuds = NULL;
+
+	lire_SGF(sgf);
+    return sgf;
 }
 
 

@@ -173,7 +173,6 @@ int main(int argc, char * argv[])
 	i++;
     }
 
-
     mon_SGF = ouvrir_SGF();
     if (mon_SGF == NULL )
     {
@@ -182,10 +181,11 @@ int main(int argc, char * argv[])
 	exit (EXIT_DEVICE);
     }
 
-    if (num_bloc == NULL_BLOC)
-	affiche_SGF( mon_SGF);
-    else
-	affiche_bloc( num_bloc, mon_SGF);
+    if (num_bloc == NULL_BLOC) {
+		affiche_SGF( mon_SGF);
+	} else {
+		affiche_bloc( num_bloc, mon_SGF);
+	}
 
     mon_SGF=fermer_SGF(mon_SGF);
 

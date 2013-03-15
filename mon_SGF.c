@@ -113,7 +113,7 @@ int lire_table_inoeuds ( SGF_t *mon_SGF) /* TODO TEST ME */
     assert( mon_SGF != NULL && mon_SGF->superbloc != NULL && mon_SGF->table_inoeuds != NULL );		/* DEBUG*/
 	/* avance jusqu'au bloc 1 */
     lseek(mon_SGF->device_num, mon_SGF->superbloc->taille_bloc, SEEK_SET);
-    if (read(mon_SGF->device_num, mon_SGF->table_inoeuds, mon_SGF->superbloc->nb_max_inoeuds * sizeof(inoeud_t))
+    if (read(mon_SGF->device_num, mon_SGF->table_inoeuds, mon_SGF->superbloc->nb_max_inoeuds * sizeof(inoeud_t)) /*  FIXME */
 		< mon_SGF->superbloc->nb_max_inoeuds * sizeof(inoeud_t))
 		return EXIT_READ_PB;
 
@@ -137,7 +137,7 @@ int lire_SGF ( SGF_t *mon_SGF) /*  TODO TEST ME */
 	}
 
 	if(mon_SGF->table_inoeuds == NULL) {
-		mon_SGF->table_inoeuds = malloc(sizeof(inoeud_t));
+		mon_SGF->table_inoeuds = malloc(sizeof(inoeud_t)*_NB_MAX_INOEUDS_);
 	}
 
 	if(mon_SGF->superbloc == NULL || mon_SGF->table_inoeuds == NULL) {
@@ -148,8 +148,8 @@ int lire_SGF ( SGF_t *mon_SGF) /*  TODO TEST ME */
 	mon_SGF->superbloc->taille_du_SF = _NB_MAX_BLOCS_;
     mon_SGF->superbloc->taille_bloc = _TAILLE_BLOC_;
 	/*  FIXME offset de 1 */
-    mon_SGF->superbloc->premier_bloc_libre = 2 + (mon_SGF->superbloc->nb_max_inoeuds * sizeof(inoeud_t) -1)/mon_SGF->superbloc->taille_bloc; 
-
+    mon_SGF->superbloc->premier_bloc_libre = (2 + (mon_SGF->superbloc->nb_max_inoeuds * sizeof(inoeud_t)-1)/mon_SGF->superbloc->taille_bloc)+1; /* +1 ?! */ 
+	lire_table_inoeuds(mon_SGF);
 	/*  
 	mon_SGF->table_inoeuds->type_de_fichier = TYPE_DE_FICHIER;
 	mon_SGF->table_inoeuds->taille = TAILLE;
@@ -179,6 +179,7 @@ SGF_t * ouvrir_SGF () /*  TODO TEST ME */
 	sgf->table_inoeuds = NULL;
 
 	lire_SGF(sgf);
+	printf("%d" ,sgf->superbloc->premier_bloc_libre);
     return sgf;
 }
 
@@ -280,8 +281,13 @@ int lire_bloc ( char * bloc, int num_bloc, SGF_t *mon_SGF)
 
 int inoeud_libre ( SGF_t *mon_SGF)
 {
-/* 	A FAIRE 	*/
-    return NO_INOEUD;		/* pas de inoeud libre */
+	int i;
+	
+	for(i=0 ; (mon_SGF->table_inoeuds[i].type_de_fichier != INOEUD_LIBRE || 
+				i <= mon_SGF->superbloc->nb_max_inoeuds) ; ++i); 
+
+/* 	A FAIRE 	TODO TESTME*/
+    return ((i <= mon_SGF->superbloc->nb_max_inoeuds) ? i : NO_INOEUD);
 }
 
 
@@ -294,8 +300,7 @@ int inoeud_libre ( SGF_t *mon_SGF)
 
 int bloc_libre_suivant ( int num_bloc, SGF_t *mon_SGF)
 {
-/* 	A FAIRE 	*/
-    return NULL_BLOC;
+    return ((num_bloc+1) < (mon_SGF->superbloc->taille_du_SF) ? num_bloc+1:NULL_BLOC) ;
 }
 
 

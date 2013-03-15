@@ -76,9 +76,7 @@ void affiche_table_inoeuds ( SGF_t *mon_SGF)
 void affiche_liste_blocs_libres ( SGF_t *mon_SGF)
 {
     int num_bloc;
-
     assert( mon_SGF != NULL && mon_SGF->superbloc != NULL );		/* DEBUG*/
-
     printf("Liste des blocs libres :\n ");
     num_bloc = mon_SGF->superbloc->premier_bloc_libre;		/* premier bloc libre */
     while ( num_bloc != NULL_BLOC )

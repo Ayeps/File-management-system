@@ -6,19 +6,33 @@
 
 #include "mon_SGF.h"
 
+void affichierInoeud(int inoeud, char* chemin, int taille);
 int main(int argc, char * argv[])
 {
     SGF_t * mon_SGF;		/* ma structure de SGF */
     int inoeud_rep;
+	char* chemin;
     dir_element_t * liste_rep = NULL;
     int i;
+	int list=0;
 
-    if ( argc != 2 )
+    if ( argc != 2 && argc != 3)
     {
-	fprintf(stderr,"Usage: %s dir\n", argv[0]);
-	exit (EXIT_PARAM);
+		fprintf(stderr,"Usage: %s [-l] dir\n", argv[0]);
+		exit (EXIT_PARAM);
     }
-    if (argv[1][0]!='/')
+	if(argc == 3) {
+		if(strcmp(argv[1], "-l") != 0) {
+			fprintf(stderr,"Usage: %s [-l] dir\n", argv[0]);
+			exit (EXIT_PARAM);
+		}
+		chemin = argv[2];
+		list = 1;
+	} else {
+		chemin = argv[1];
+	}
+
+    if (chemin[0]!='/')
     {
 	fprintf(stderr,"%s: erreur de designation \"%s\" doit commencer par '/' (chemin absolu).\n", argv[0], argv[1]);
 	exit (EXIT_PARAM);
@@ -32,11 +46,11 @@ int main(int argc, char * argv[])
 	exit (EXIT_DEVICE);
     }
 
-    inoeud_rep=inoeud_designation_element(argv[1], 0, mon_SGF);
+    inoeud_rep=inoeud_designation_element(chemin, 0, mon_SGF);
 
     if (inoeud_rep == NO_INOEUD)
     {
-	fprintf(stderr,"%s: chemin \"%s\" inexistant !\n", argv[0], argv[1]);
+	fprintf(stderr,"%s: chemin \"%s\" inexistant !\n", argv[0], chemin);
 	exit (EXIT_PARAM);
     }
 
@@ -46,15 +60,27 @@ int main(int argc, char * argv[])
 	exit (EXIT_DEVICE);
     }
 
-    printf("%3d '%s' :\n", inoeud_rep, argv[1]);
+	affichierInoeud(inoeud_rep, chemin, (list) ? mon_SGF->table_inoeuds[inoeud_rep].taille : -1);
     i=0;
     while( liste_rep[i].elt_inoeud != NO_INOEUD)
     {
-	printf(" %3d %s\n", liste_rep[i].elt_inoeud, liste_rep[i].elt_name);
-	i++;
+		affichierInoeud(liste_rep[i].elt_inoeud, liste_rep[i].elt_name, (list) ? mon_SGF->table_inoeuds[liste_rep[i].elt_inoeud].taille : -1);
+		i++;
     }
 
     mon_SGF=fermer_SGF(mon_SGF);
 
     exit (0);
+}
+
+/* 
+ * Afficher les informations d'un inoeud
+ * @param taille La taille du fichier, si celle-ci est -1, la taille ne sera pas affiché.
+ */
+void affichierInoeud(int numInoeud, char* chemin, int taille) {
+	if(taille == -1) {
+		printf("%3d '%s' :\n", numInoeud, chemin);
+	} else {
+		printf("%3d\t %4d o \t'%s' :\n", numInoeud, taille, chemin);
+	}
 }

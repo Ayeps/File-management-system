@@ -1,14 +1,10 @@
-/************************************************************************************************************************/
+/**********************************************************************************************/
 /* mon_SGF.c : fonctions de gestion d'un SGF : Système de Gestion de Fichiers.						*/
 /*															*/
 /* C. Collet 2013 ® Université Paul Sabatier, Toulouse									*/
-/************************************************************************************************************************/
+/***********************************************************************************************/
 
 #include "mon_SGF.h"
-
-#define _NB_MAX_INOEUDS_	10
-#define _TAILLE_BLOC_		64
-#define _NB_MAX_BLOCS_		64
 
 /********************************************************************************/
 /* affiche_erreur : affiche un message d'erreur en fonction de "num_erreur".	*/
@@ -69,9 +65,10 @@ int ecrire_superbloc ( SGF_t *mon_SGF)
 /* Renvoie 0 si tout va bien ou un code d'erreur sinon.				*/
 /********************************************************************************/
 
-int lire_superbloc ( SGF_t *mon_SGF) /* TODO TEST ME */
+int lire_superbloc ( SGF_t *mon_SGF) 
 {
     assert( mon_SGF != NULL && mon_SGF->superbloc != NULL );		/* DEBUG*/
+	lseek(mon_SGF->device_num, 0, SEEK_SET);
 	if(read(mon_SGF->device_num, mon_SGF->superbloc, sizeof(superbloc_t)) < sizeof(superbloc_t))
 		return EXIT_READ_PB;
 
@@ -108,7 +105,7 @@ int ecrire_table_inoeuds ( SGF_t *mon_SGF)
 /* Renvoie 0 si tout va bien ou un code d'erreur sinon.				*/
 /********************************************************************************/
 
-int lire_table_inoeuds ( SGF_t *mon_SGF) /* TODO TEST ME */
+int lire_table_inoeuds ( SGF_t *mon_SGF) 
 {
     assert( mon_SGF != NULL && mon_SGF->superbloc != NULL && mon_SGF->table_inoeuds != NULL );		/* DEBUG*/
 	/* avance jusqu'au bloc 1 */
@@ -128,7 +125,7 @@ int lire_table_inoeuds ( SGF_t *mon_SGF) /* TODO TEST ME */
 /* Renvoie 0 si tout va bien ou un code d'erreur sinon.				*/
 /********************************************************************************/
 
-int lire_SGF ( SGF_t *mon_SGF) /*  TODO TEST ME */
+int lire_SGF ( SGF_t *mon_SGF) 
 {
 	assert(mon_SGF != NULL); /*  DEBUG */
 
@@ -136,25 +133,18 @@ int lire_SGF ( SGF_t *mon_SGF) /*  TODO TEST ME */
 		mon_SGF->superbloc = malloc(sizeof(superbloc_t));
 	}
 
-	if(mon_SGF->table_inoeuds == NULL) {
-		mon_SGF->table_inoeuds = malloc(sizeof(inoeud_t)*_NB_MAX_INOEUDS_);
-	}
 
-	if(mon_SGF->superbloc == NULL || mon_SGF->table_inoeuds == NULL) {
+	if(mon_SGF->superbloc == NULL) {
 		return EXIT_MEM_ALLOC;
 	}
 
-	mon_SGF->superbloc->nb_max_inoeuds = _NB_MAX_INOEUDS_;
-	mon_SGF->superbloc->taille_du_SF = _NB_MAX_BLOCS_;
-    mon_SGF->superbloc->taille_bloc = _TAILLE_BLOC_;
-	/*  FIXME offset de 1 */
-    mon_SGF->superbloc->premier_bloc_libre = (2 + (mon_SGF->superbloc->nb_max_inoeuds * sizeof(inoeud_t)-1)/mon_SGF->superbloc->taille_bloc)+1; /* +1 ?! */ 
+	lire_superbloc(mon_SGF);
+
+	if(mon_SGF->table_inoeuds == NULL) {
+		mon_SGF->table_inoeuds = malloc(sizeof(inoeud_t)*mon_SGF->superbloc->nb_max_inoeuds);
+	}
 	lire_table_inoeuds(mon_SGF);
-	/*  
-	mon_SGF->table_inoeuds->type_de_fichier = TYPE_DE_FICHIER;
-	mon_SGF->table_inoeuds->taille = TAILLE;
-	mon_SGF->table_inoeuds->liens_directs_blocs = LIENS_DIRECTS_BLOCS;
-*/
+	  
     return 0;							/* tout va bien */
 }
 
@@ -167,7 +157,7 @@ int lire_SGF ( SGF_t *mon_SGF) /*  TODO TEST ME */
 /*  pour d'autres opérations sur le SGF.					*/
 /********************************************************************************/
 
-SGF_t * ouvrir_SGF () /*  TODO TEST ME */
+SGF_t * ouvrir_SGF (void) 
 {
 	SGF_t* sgf;
 	sgf = malloc(sizeof(SGF_t));
@@ -175,11 +165,12 @@ SGF_t * ouvrir_SGF () /*  TODO TEST ME */
 		exit(EXIT_MEM_ALLOC);
 	}
 	sgf->device_num = open(DEVICE_NAME, O_RDWR); /* Ouverture du fichier*/
+/*	assert(sgf->device_num != NULL); */
 	sgf->superbloc = NULL;
 	sgf->table_inoeuds = NULL;
 
 	lire_SGF(sgf);
-	printf("%d" ,sgf->superbloc->premier_bloc_libre);
+
     return sgf;
 }
 
@@ -282,12 +273,10 @@ int lire_bloc ( char * bloc, int num_bloc, SGF_t *mon_SGF)
 int inoeud_libre ( SGF_t *mon_SGF)
 {
 	int i;
-	
-	for(i=0 ; (mon_SGF->table_inoeuds[i].type_de_fichier != INOEUD_LIBRE || 
-				i <= mon_SGF->superbloc->nb_max_inoeuds) ; ++i); 
+	for(i=0 ; (mon_SGF->table_inoeuds[i].type_de_fichier != INOEUD_LIBRE) && (i < mon_SGF->superbloc->nb_max_inoeuds) ; ++i );
 
-/* 	A FAIRE 	TODO TESTME*/
-    return ((i <= mon_SGF->superbloc->nb_max_inoeuds) ? i : NO_INOEUD);
+	return (i >= mon_SGF->superbloc->nb_max_inoeuds) ? NO_INOEUD : i;
+/* 	TODO TESTME*/
 }
 
 
@@ -300,7 +289,15 @@ int inoeud_libre ( SGF_t *mon_SGF)
 
 int bloc_libre_suivant ( int num_bloc, SGF_t *mon_SGF)
 {
-    return ((num_bloc+1) < (mon_SGF->superbloc->taille_du_SF) ? num_bloc+1:NULL_BLOC) ;
+	int bloc;
+/*  TODO assert */	
+/*  TODO TESTME */	
+    lseek (mon_SGF->device_num, num_bloc * mon_SGF->superbloc->taille_bloc, SEEK_SET);
+	if(read(mon_SGF->device_num, &bloc, sizeof(int)) < sizeof(int)) {
+		return EXIT_READ_PB;
+	}
+
+	return bloc;
 }
 
 
@@ -319,9 +316,23 @@ int bloc_libre_suivant ( int num_bloc, SGF_t *mon_SGF)
 /* Renvoie 0 si tout va bien ou un code d'erreur sinon.				*/
 /********************************************************************************/
 
-int liberer_blocs_du_inoeud ( int inoeud, int premier_bloc, SGF_t *mon_SGF)
+int liberer_blocs_du_inoeud ( int inoeud, int premier_bloc, SGF_t *mon_SGF) /*  TODO TESTME */
 {
-/* 	A FAIRE 	*/
+	int i;
+	for(i=0 ; (mon_SGF->table_inoeuds[inoeud].liens_directs_blocs[i] != premier_bloc && i < NB_LIENS_DIRECTS); ++i);
+	assert(i < NB_LIENS_DIRECTS);
+/* 	TODO A FAIRE 	*/
+	for(; (mon_SGF->table_inoeuds[inoeud].liens_directs_blocs[i] != NULL_BLOC) 
+							&& (i < NB_LIENS_DIRECTS) ; ++i) { 
+		if(write(mon_SGF->device_num, &(mon_SGF->superbloc->premier_bloc_libre), sizeof(int)) < sizeof(int)) {
+			return EXIT_WRITE_PB;
+		}
+		mon_SGF->superbloc->premier_bloc_libre = mon_SGF->table_inoeuds[inoeud].liens_directs_blocs[i];
+		mon_SGF->table_inoeuds[inoeud].liens_directs_blocs[i] = NULL_BLOC;
+	}
+
+	ecrire_superbloc(mon_SGF);
+	ecrire_table_inoeuds(mon_SGF);
     return 0;							/* tout va bien */
 }
 
@@ -342,7 +353,17 @@ int liberer_blocs_du_inoeud ( int inoeud, int premier_bloc, SGF_t *mon_SGF)
 
 int allouer_n_blocs_dans_inoeud ( int nb_blocs_a_allouer, int inoeud, SGF_t *mon_SGF)
 {
-/* 	A FAIRE 	*/
+	int i;
+	for(i=0 ; mon_SGF->table_inoeuds[inoeud].liens_directs_blocs[i] != NULL_BLOC && i < NB_LIENS_DIRECTS; ++i);
+	assert(i < NB_LIENS_DIRECTS);
+	for(; i < nb_blocs_a_allouer ; ++i) {
+		mon_SGF->table_inoeuds[inoeud].liens_directs_blocs[i] = mon_SGF->superbloc->premier_bloc_libre;
+		mon_SGF->superbloc->premier_bloc_libre = bloc_libre_suivant(mon_SGF->superbloc->premier_bloc_libre,mon_SGF);
+	}
+	ecrire_superbloc(mon_SGF);
+	ecrire_table_inoeuds(mon_SGF);
+
+/* 	TODO A FAIRE 	*/
     return 0;							/* tout va bien */
 }
 
@@ -358,9 +379,26 @@ int allouer_n_blocs_dans_inoeud ( int nb_blocs_a_allouer, int inoeud, SGF_t *mon
 /* Renvoie 0 si tout va bien ou un code d'erreur sinon.				*/
 /********************************************************************************/
 
-int ecrire_donnees_dans_inoeud ( char * data, int data_size, int inoeud, SGF_t *mon_SGF)
+int ecrire_donnees_dans_inoeud ( char * data, int data_size, int inoeud, SGF_t *mon_SGF) /* TODO TESTME */
 {
-/* 	A FAIRE 	*/
+	int dataEcrites=0;
+	int i,j;
+/* 	TODO A FAIRE 	*/
+	mon_SGF->table_inoeuds[inoeud].taille = data_size;
+	for(i=0 ; dataEcrites < data_size ; ++i) {
+		if(mon_SGF->table_inoeuds[inoeud].liens_directs_blocs[i] == NULL_BLOC) {
+			allouer_n_blocs_dans_inoeud(((data_size-dataEcrites)/mon_SGF->superbloc->taille_bloc)+1,inoeud,mon_SGF);
+		}
+		if(dataEcrites + mon_SGF->superbloc->taille_bloc <= data_size) { 
+			ecrire_donnees_dans_bloc(data,mon_SGF->superbloc->taille_bloc,mon_SGF->table_inoeuds[inoeud].liens_directs_blocs[i],mon_SGF);
+			dataEcrites += mon_SGF->superbloc->taille_bloc;
+		} else {
+			ecrire_donnees_dans_bloc(data,data_size-dataEcrites,mon_SGF->table_inoeuds[inoeud].liens_directs_blocs[i], mon_SGF);
+			dataEcrites = data_size;
+		}
+	}
+//	liberer_blocs_du_inoeud(inoeud,,mon_SGF);
+	// TODO FIXME ? Buf au niveau de ./mon_mkdir 
     return 0;							/* tout va bien */
 }
 
@@ -376,8 +414,23 @@ int ecrire_donnees_dans_inoeud ( char * data, int data_size, int inoeud, SGF_t *
 
 int lire_donnees_dans_inoeud ( char * data, int data_size, int inoeud, SGF_t *mon_SGF)
 {
-/* 	A FAIRE 	*/
-    return 0;							/* tout va bien */
+/* 	TODO A FAIRE 	*/
+int i;
+int dataLues=0;
+char buff[512];
+
+for(i=0 ; dataLues < data_size ; ++i) {
+	if(dataLues + mon_SGF->superbloc->taille_bloc <= data_size) { 
+		lire_donnees_dans_bloc(data,mon_SGF->superbloc->taille_bloc,mon_SGF->table_inoeuds[inoeud].liens_directs_blocs[i],mon_SGF);
+		dataLues += mon_SGF->superbloc->taille_bloc;
+	} else {
+		lire_donnees_dans_bloc(data,data_size-dataLues,mon_SGF->table_inoeuds[inoeud].liens_directs_blocs[i], mon_SGF);
+		dataLues = data_size;
+		/* TODO concaténer les data*/
+	}
+}
+
+return 0;							/* tout va bien */
 }
 
 
@@ -387,10 +440,19 @@ int lire_donnees_dans_inoeud ( char * data, int data_size, int inoeud, SGF_t *mo
 /* Renvoie le numéro du inoeud créé si tout va bien ou "NO_INOEUD" sinon.	*/
 /********************************************************************************/
 
-int creer_inoeud ( int type_inoeud, SGF_t *mon_SGF)
+int creer_inoeud ( int type_inoeud, SGF_t *mon_SGF) /*  TODO TESTME */
 {
-/* 	A FAIRE 	*/
-    return NO_INOEUD;
+	int premierInoeud;
+	if((premierInoeud = (inoeud_libre(mon_SGF)) == NO_INOEUD)) {
+		return NO_INOEUD;
+	}
+	mon_SGF->table_inoeuds[premierInoeud].type_de_fichier = type_inoeud;
+	mon_SGF->table_inoeuds[premierInoeud].liens_directs_blocs[0] = NULL_BLOC;
+	mon_SGF->table_inoeuds[premierInoeud].taille = 0;
+
+	ecrire_table_inoeuds(mon_SGF);
+
+	return premierInoeud;
 }
 
 
@@ -403,8 +465,8 @@ int creer_inoeud ( int type_inoeud, SGF_t *mon_SGF)
 
 int liberer_inoeud ( int inoeud, SGF_t *mon_SGF)
 {
-/* 	A FAIRE 	*/
-    return 0;							/* tout va bien */
+/* 	TODO A FAIRE 	*/
+return 0;							/* tout va bien */
 }
 
 
@@ -419,19 +481,20 @@ int liberer_inoeud ( int inoeud, SGF_t *mon_SGF)
 
 dir_element_t *  lire_liste_rep_dans_inoeud ( int inoeud_rep, SGF_t *mon_SGF)
 {
-    dir_element_t * liste_rep = NULL;
-    assert( mon_SGF != NULL && mon_SGF->table_inoeuds != NULL );		/* DEBUG*/
-    assert( mon_SGF->table_inoeuds[inoeud_rep].type_de_fichier == INOEUD_REPERTOIRE && mon_SGF->table_inoeuds[inoeud_rep].taille >0 );	/* DEBUG*/
+dir_element_t * liste_rep = NULL;
+assert( mon_SGF != NULL && mon_SGF->table_inoeuds != NULL );		/* DEBUG*/
+assert( mon_SGF->table_inoeuds[inoeud_rep].type_de_fichier == INOEUD_REPERTOIRE && mon_SGF->table_inoeuds[inoeud_rep].taille >0 );	/* DEBUG*/
 
-    liste_rep = malloc( mon_SGF->table_inoeuds[inoeud_rep].taille);
-    if (liste_rep == NULL)
-	return NULL;
+liste_rep = malloc( mon_SGF->table_inoeuds[inoeud_rep].taille);
+if (liste_rep == NULL)
+return NULL;
 
-    if (lire_donnees_dans_inoeud ( (char *) liste_rep, mon_SGF->table_inoeuds[inoeud_rep].taille, inoeud_rep, mon_SGF) >0)
+if (lire_donnees_dans_inoeud ( (char *) liste_rep, mon_SGF->table_inoeuds[inoeud_rep].taille, inoeud_rep, mon_SGF) >0)
     {
 	free(liste_rep);
 	return NULL;
     }
+	printf("%s", liste_rep);
     return liste_rep;
 }
 
@@ -583,8 +646,7 @@ int inoeud_element_dans_repertoire(char * nom_element, int inoeud_rep, SGF_t *mo
 
     if (mon_SGF->table_inoeuds[inoeud_rep].type_de_fichier != INOEUD_REPERTOIRE)
 	return NO_INOEUD;
-
-    if ((liste_rep =lire_liste_rep_dans_inoeud ( inoeud_rep, mon_SGF)) == NULL)
+	if ((liste_rep =lire_liste_rep_dans_inoeud ( inoeud_rep, mon_SGF)) == NULL)
     {
 	fprintf(stderr,"lire_donnees_dans_inoeud: %d", inoeud_rep);
 	perror (DEVICE_NAME);
@@ -593,7 +655,7 @@ int inoeud_element_dans_repertoire(char * nom_element, int inoeud_rep, SGF_t *mo
 
     i=0;					/* cherche l'élément dans la liste des éléments du répertoire */
     while( liste_rep[i].elt_inoeud != NO_INOEUD && strcmp(liste_rep[i].elt_name,nom_element) != 0 )
-	i++;
+		i++;
 
     inoeud_elt = liste_rep[i].elt_inoeud;
     free(liste_rep);

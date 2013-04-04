@@ -1,5 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Werror -ansi -pedantic -O2 -g
+#FLAGS = -Wall -Werror -ansi -pedantic -O2 -g
+FLAGS = -Wall -Werror -ansi -O2 -g
 INCLUDE = ./
 OBJETS_MON_SGF = mon_SGF.o
 PROGRAMS = mon_formater  mon_affiche_SGF  mon_ls  mon_mkdir mon_rmdir

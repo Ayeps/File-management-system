@@ -3,7 +3,7 @@ CC = gcc
 FLAGS = -Wall -Werror -ansi -O2 -g
 INCLUDE = ./
 OBJETS_MON_SGF = mon_SGF.o
-PROGRAMS = mon_formater  mon_affiche_SGF  mon_ls  mon_mkdir mon_rmdir
+PROGRAMS = mon_formater  mon_affiche_SGF  mon_ls  mon_mkdir mon_rmdir mon_du
 
 .SUFFIXES: .c .h .o
 
@@ -25,6 +25,11 @@ mon_affiche_SGF: mon_affiche_SGF.c ${OBJETS_MON_SGF} mon_SGF.h
 	${CC} -I${INCLUDE} ${CFLAGS} -o $@ $<   ${OBJETS_MON_SGF}
 
 mon_ls: 	mon_ls.c ${OBJETS_MON_SGF} mon_SGF.h
+	@echo
+	@echo "################  $@  ################"
+	${CC} -I${INCLUDE} ${CFLAGS} -o $@ $<   ${OBJETS_MON_SGF}
+	
+mon_du: 	mon_du.c ${OBJETS_MON_SGF} mon_SGF.h
 	@echo
 	@echo "################  $@  ################"
 	${CC} -I${INCLUDE} ${CFLAGS} -o $@ $<   ${OBJETS_MON_SGF}

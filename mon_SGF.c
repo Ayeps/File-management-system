@@ -473,7 +473,6 @@ int liberer_inoeud ( int inoeud, SGF_t *mon_SGF) /*  TODO TESTME */
 	liberer_blocs_du_inoeud(inoeud,mon_SGF->table_inoeuds[inoeud].liens_directs_blocs[0],mon_SGF);
 	mon_SGF->table_inoeuds[inoeud].taille = 0;
 	mon_SGF->table_inoeuds[inoeud].type_de_fichier = INOEUD_LIBRE;
-	ecrire_superbloc(mon_SGF);
 	ecrire_table_inoeuds(mon_SGF);
 	/* 	TODO A FAIRE 	*/
 	return 0;							/* tout va bien */

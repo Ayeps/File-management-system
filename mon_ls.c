@@ -6,7 +6,7 @@
 
 #include "mon_SGF.h"
 
-void affichierInoeud(int inoeud, char* chemin, int taille);
+void afficherInoeud(int inoeud, char* chemin, int taille);
 int main(int argc, char * argv[])
 {
     SGF_t * mon_SGF;		/* ma structure de SGF */
@@ -60,11 +60,11 @@ int main(int argc, char * argv[])
 	exit (EXIT_DEVICE);
     }
 
-	affichierInoeud(inoeud_rep, chemin, (list) ? mon_SGF->table_inoeuds[inoeud_rep].taille : -1);
+	afficherInoeud(inoeud_rep, chemin, (list) ? mon_SGF->table_inoeuds[inoeud_rep].taille : -1);
     i=0;
     while( liste_rep[i].elt_inoeud != NO_INOEUD)
     {
-		affichierInoeud(liste_rep[i].elt_inoeud, liste_rep[i].elt_name, (list) ? mon_SGF->table_inoeuds[liste_rep[i].elt_inoeud].taille : -1);
+		afficherInoeud(liste_rep[i].elt_inoeud, liste_rep[i].elt_name, (list) ? mon_SGF->table_inoeuds[liste_rep[i].elt_inoeud].taille : -1);
 		i++;
     }
 
@@ -77,7 +77,7 @@ int main(int argc, char * argv[])
  * Afficher les informations d'un inoeud
  * @param taille La taille du fichier, si celle-ci est -1, la taille ne sera pas affiché.
  */
-void affichierInoeud(int numInoeud, char* chemin, int taille) {
+void afficherInoeud(int numInoeud, char* chemin, int taille) {
 	if(taille == -1) {
 		printf("%3d '%s' :\n", numInoeud, chemin);
 	} else {

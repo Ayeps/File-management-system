@@ -1,0 +1,90 @@
+\documentclass[a4paper, 11pt]{article}
+
+\usepackage{xcolor}
+\input{/home/aroquemaurel/cours/includesLaTeX/couleurs.tex}
+\usepackage{lmodern}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[francais]{babel}
+\usepackage[top=1.7cm, bottom=1.7cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{verbatim}
+\usepackage{tikz} %Vectoriel
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{multido}
+\usepackage{amssymb}
+\usepackage{multicol}
+\usepackage{float}
+\usepackage[urlbordercolor={1 1 1}, linkbordercolor={1 1 1}, linkcolor=vert1, urlcolor=bleu, colorlinks=true]{hyperref}
+
+\newcommand{\titre}{Système de Gestion de Fichiers}
+\newcommand{\numero}{}
+\newcommand{\typeDoc}{Projet}
+\newcommand{\module}{Système 2}
+\newcommand{\sigle}{systeme}
+\newcommand{\semestre}{4}
+
+\input{/home/satenske/cours/includesLaTeX/l2/tddm.tex}
+\input{/home/aroquemaurel/cours/includesLaTeX/listings.tex} %prise en charge du langage C 
+\input{/home/aroquemaurel/cours/includesLaTeX/remarquesExempleAttention.tex}
+\input{/home/aroquemaurel/cours/includesLaTeX/polices.tex}
+\input{/home/aroquemaurel/cours/includesLaTeX/affichageChapitre.tex}
+\makeatother
+\begin{document}
+	\maketitle
+	\setcounter{secnumdepth}{2}
+	\section{Complétion des fonctions de base du SGF}
+		\subsection{Lecture et écriture du SGF}
+		\begin{description}
+			\item[\texttt{lire\_superbloc}] Afin de lire le superbloc, cette fonction positionne tout d'abord le curseur au premier bloc du fichier puis lit dans
+				\texttt{mon\_SGF->superbloc} les données du superbloc, sa taille est connue grâce à \texttt{sizeof(superbloc\_t)}. 
+				
+				\textit{Si une erreur se produit, lors du \texttt{read}, la fonction retourne \texttt{EXIT\_READ\_PB}.}
+			\item[\texttt{lire\_table\_inoeuds}] La lecture de la table des inoeuds est le même principe que pour le superbloc, nous savons que celle-ci est écrite
+				à partir du bloc 1\footnote{le bloc 0 étant réservé au superbloc}, ainsi il faut se positionner au bloc 1, puis faire lire \texttt{sizeof(inoeud\_t)}
+				octets. 
+				
+				\textit{En cas d'erreur du \texttt{read}, la fonction retourne \texttt{EXIT\_READ\_PB}.}
+			\item[\texttt{lire\_SGF}] La lecture du SGF ne peut se faire que si le SGF est ouvert correctement, cette pré-condition est vérifié à l'aide de
+				\texttt{assert}. Afin de lire le contenu du SGF, il nous suffit d'utiliser les deux fonctions écrites précédemment, cependant avant d'appeler
+				ses fonctions, un \texttt{malloc} doit être fait. 
+				
+				\textit{En cas d'erreur d'allocation mémoire, la fonction retourne \texttt{EXIT\_MEM\_ALLOC}.}
+			\item[\texttt{ouvrir\_SGF}] Tout d'abord, il faut allouer la mémoire pour la structure de type \texttt{SGF\_t} contenant notre SGF, si ce
+				\texttt{malloc}
+				s'effectue correctement, il faut ouvrir le fichier \texttt{DEVICE\_NAME} à l'aide de la fonction \texttt{open}.
+
+				Nous ne gérons pas le cas où le \texttt{open} retourne \texttt{NULL}, en effet ce cas est systématiquement géré après l'appel de notre fonction.
+		\end{description}
+		\subsection{Gestion des inoeuds et blocs}
+		\begin{description}
+			\item[\texttt{bloc\_libre\_suivant}] La liste des blocs libre est représentée par une liste chaînée. Sur le disque dur, à la position de chaque bloc
+				libre est stocké le numéro du bloc libre suivant.
+
+				Ainsi, en se déplaçant de \texttt{num\_bloc} blocs\footnote{la taille d'un bloc étant connue dans le superbloc}, 
+				nous pourrons ensuite lire le numéro du bloc libre suivant à l'aide d'un \texttt{read}. 
+				
+				\textit{En cas de problème au niveau du \texttt{read}, la fonction retourne \texttt{EXIT\_READ\_PB}.}
+			\item[\texttt{allouer\_n\_blocs\_dans\_inoeud}]
+			\item[\texttt{lire\_donnees\_dans\_inoeud}]
+			\item[\texttt{ecrire\_donnees\_dans\_inoeud}]
+			\item[\texttt{creer\_inoeud}]
+			\item[\texttt{inoeud\_libre}] Le premier inoeud libre est trouvé en parcourant la table des inoeuds jusqu'à trouver un inoeud ayant pour type
+				\texttt{INOEUD\_LIBRE}, si nous arrivons à la fin de la table sans avoir trouvé d'inoeud libre, alors il faut renvoyer \texttt{NO\_INOEUD}. 
+			\item[\texttt{liberer\_blocs\_du\_inoeud}]
+			\item[\texttt{liberer\_inoeud}] Pour libérer un inoeud, il faut appeler la fonction développée précédemment, \texttt{liberer\_blocs\_du\_inoeud},
+				celle-ci libérera tous les blocs de l'inoeud. Une fois les blocs libérés correctement, la taille et le type de l'inoeud sont modifiés. Ensuite il
+				ne faut pas oublier de mettre à jour la table des inoeuds dans le fichier à l'aide de la fonction \texttt{ecrire\_table\_inoeuds}.
+		\end{description}
+	\section{Commandes d'accès au SGF}
+	\subsection{\texttt{ls -l}}
+	\begin{description}
+		\item[\texttt{afficherInoeud}] 
+	\end{description}
+	\subsection{\texttt{du}}
+	\begin{description}
+		\item[\texttt{tailleSousRep}] 
+		\item[\texttt{tailletotalrepertoire}] 
+	\end{description}
+	\section{Exemples d'exécution}
+\end{document}

@@ -66,7 +66,6 @@ int tailleTotalRepertoire(char* chemin, SGF_t* mon_SGF) {
 	taille += tailleSousRep(inoeud_rep, mon_SGF);
 	if((strcmp(liste_rep[1].elt_name, "..") == 0 && liste_rep[2].elt_inoeud != NO_INOEUD) ||
 			(liste_rep[1].elt_inoeud != NO_INOEUD && strcmp(liste_rep[1].elt_name, "..") != 0)) {
-
 		/* Si le dossier est / il n'y a pas de .. */
 		if(strcmp(chemin, "/") == 0) {
 		  i=1;

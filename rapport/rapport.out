@@ -1,7 +1,7 @@
-\BOOKMARK [1][-]{section.1}{Compl\351tion des fonctions de base du SGF}{}% 1
-\BOOKMARK [2][-]{subsection.1.1}{Lecture et \351criture du SGF}{section.1}% 2
-\BOOKMARK [2][-]{subsection.1.2}{Gestion des inoeuds et blocs}{section.1}% 3
-\BOOKMARK [1][-]{section.2}{Commandes d'acc\350s au SGF}{}% 4
-\BOOKMARK [2][-]{subsection.2.1}{ls -l}{section.2}% 5
-\BOOKMARK [2][-]{subsection.2.2}{du}{section.2}% 6
-\BOOKMARK [1][-]{section.3}{Exemples d'ex\351cution}{}% 7
+\BOOKMARK [1][-]{section.1}{Compl\351tion des fonctions de base du SGF \(mon\137SGF.c\)}{}
+\BOOKMARK [2][-]{subsection.1.1}{Lecture et \351criture du SGF}{section.1}
+\BOOKMARK [2][-]{subsection.1.2}{Gestion des inoeuds et blocs}{section.1}
+\BOOKMARK [1][-]{section.2}{Commandes d'acc\350s au SGF}{}
+\BOOKMARK [2][-]{subsection.2.1}{ls -l \(mon\137ls.c\)}{section.2}
+\BOOKMARK [2][-]{subsection.2.2}{du \(mon\137du.c\)}{section.2}
+\BOOKMARK [1][-]{section.3}{Exemples d'ex\351cution}{}

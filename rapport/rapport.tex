@@ -33,28 +33,29 @@
 \begin{document}
 	\maketitle
 	\setcounter{secnumdepth}{2}
-	\section{Complétion des fonctions de base du SGF}
+	\section{Complétion des fonctions de base du SGF (\texttt{mon\_SGF.c})}
 		\subsection{Lecture et écriture du SGF}
 		\begin{description}
 			\item[\texttt{lire\_superbloc}] Afin de lire le superbloc, cette fonction positionne tout d'abord le curseur au premier bloc du fichier puis lit dans
 				\texttt{mon\_SGF->superbloc} les données du superbloc, sa taille est connue grâce à \texttt{sizeof(superbloc\_t)}. 
-				
+
 				\textit{Si une erreur se produit, lors du \texttt{read}, la fonction retourne \texttt{EXIT\_READ\_PB}.}
 			\item[\texttt{lire\_table\_inoeuds}] La lecture de la table des inoeuds est le même principe que pour le superbloc, nous savons que celle-ci est écrite
-				à partir du bloc 1\footnote{le bloc 0 étant réservé au superbloc}, ainsi il faut se positionner au bloc 1, puis faire lire \texttt{sizeof(inoeud\_t)}
+				à partir du bloc 1\footnote{le bloc 0 étant réservé au superbloc}, ainsi il faut se positionner au bloc 1, puis lire \texttt{sizeof(inoeud\_t)}
 				octets. 
 				
 				\textit{En cas d'erreur du \texttt{read}, la fonction retourne \texttt{EXIT\_READ\_PB}.}
-			\item[\texttt{lire\_SGF}] La lecture du SGF ne peut se faire que si le SGF est ouvert correctement, cette pré-condition est vérifié à l'aide de
+			\item[\texttt{lire\_SGF}] La lecture du SGF ne peut se faire que si le SGF est ouvert correctement, cette pré-condition est vérifiée à l'aide de
 				\texttt{assert}. Afin de lire le contenu du SGF, il nous suffit d'utiliser les deux fonctions écrites précédemment, cependant avant d'appeler
 				ses fonctions, un \texttt{malloc} doit être fait. 
 				
 				\textit{En cas d'erreur d'allocation mémoire, la fonction retourne \texttt{EXIT\_MEM\_ALLOC}.}
 			\item[\texttt{ouvrir\_SGF}] Tout d'abord, il faut allouer la mémoire pour la structure de type \texttt{SGF\_t} contenant notre SGF, si ce
-				\texttt{malloc}
-				s'effectue correctement, il faut ouvrir le fichier \texttt{DEVICE\_NAME} à l'aide de la fonction \texttt{open}.
+				\texttt{malloc} s'effectue correctement, il faut ouvrir le fichier \texttt{DEVICE\_NAME} à l'aide de la fonction \texttt{open}.
 
 				Nous ne gérons pas le cas où le \texttt{open} retourne \texttt{NULL}, en effet ce cas est systématiquement géré après l'appel de notre fonction.
+
+				\textit{En cas d'erreur d'allocation mémoire, la fonction retourne \texttt{EXIT\_MEM\_ALLOC}.}
 		\end{description}
 		\subsection{Gestion des inoeuds et blocs}
 		\begin{description}
@@ -62,29 +63,82 @@
 				libre est stocké le numéro du bloc libre suivant.
 
 				Ainsi, en se déplaçant de \texttt{num\_bloc} blocs\footnote{la taille d'un bloc étant connue dans le superbloc}, 
-				nous pourrons ensuite lire le numéro du bloc libre suivant à l'aide d'un \texttt{read}. 
+				nous pourrons ensuite lire le numéro du bloc libre suivant avec un simple \texttt{read}. 
 				
 				\textit{En cas de problème au niveau du \texttt{read}, la fonction retourne \texttt{EXIT\_READ\_PB}.}
-			\item[\texttt{allouer\_n\_blocs\_dans\_inoeud}]
-			\item[\texttt{lire\_donnees\_dans\_inoeud}]
-			\item[\texttt{ecrire\_donnees\_dans\_inoeud}]
-			\item[\texttt{creer\_inoeud}]
+			\item[\texttt{allouer\_n\_blocs\_dans\_inoeud}] Afin d'allouer le nombre de blocs à l'inoeud, il faut tout d'abord chercher le premier bloc libre de
+				l'inoeud et vérifier que derrière celui-ci l'inoeud possède assez de place afin d'allouer le nombre de blocs demandés.
+
+				Ensuite, on alloue à la table des liens le premier numéro de bloc libre puis on met à jour le premier bloc libre. À la fin du programme on écrit
+				nos modifications sur le disque dur à l'aide des fonctions habituels \texttt{ecrire\_superbloc} et \texttt{ecrire\_table\_inoeud}
+				
+				\textit{Si l'inoeud ne possède pas assez de blocs libre afin d'allouer \texttt{nb\_blocs\_a\_allouer}, la fonction retourne \texttt{EXIT\_FS\_FULL}.}
+			\item[\texttt{lire\_donnees\_dans\_inoeud}] Pour lire les données d'un inoeud, tant que la taille des données lues, n'est pas égale à
+				\texttt{data\_size}, on lit bloc par bloc, en faisant attention au dernier bloc, auquel on aura pas forcément besoin de lire le bloc entier, mais
+				peut être uniquement le début. Afin de lire un bloc, j'utilise la fonction \texttt{lire\_bloc}, pour le cas du dernier bloc, c'est la fonction
+				\texttt{lire\_donnees\_dans\_bloc} qui est utilisée, en effet, celle-ci permet de ne lire qu'une partie des données d'un bloc.
+			\item[\texttt{ecrire\_donnees\_dans\_inoeud}] Le fonctionnement de cette fonction est similaire à la fonction \texttt{lire\_donnees\_dans\_inoeud},
+				cependant cette fois-ci nous utilisons les fonctions \texttt{ecrire\_bloc} et \texttt{ecrire\_donnees\_dans\_bloc} pour le cas du dernier bloc.
+				De plus avant d'appeler ces fonctions, il ne faut pas oublier d'allouer les bloc si c'est nécessaire à l'aide de \texttt{allouer\_n\_blocs\_dans\_inoeud}.
+
+				Une fois les données écrites, nous mettons à jour la taille de l'inoeud en lui ajoutant les données écrites.
+			\item[\texttt{creer\_inoeud}] Cette fonction cherche tout d'abord le premier inoeud libre dans la table des inoeuds, une fois cette inoeud trouvé
+				elle met la taille de l'inoeud à zéro et lui affecte le type d'inoeud passé en paramètre. Je suppose que lors de l'appel de cette fonction,
+				tous les blocs de cet inoeud sont correctement libérés. 
+
+				\textit{Si aucun inoeud n'est libre, alors la fonction retourne \texttt{NO\_INOEUD}}
 			\item[\texttt{inoeud\_libre}] Le premier inoeud libre est trouvé en parcourant la table des inoeuds jusqu'à trouver un inoeud ayant pour type
 				\texttt{INOEUD\_LIBRE}, si nous arrivons à la fin de la table sans avoir trouvé d'inoeud libre, alors il faut renvoyer \texttt{NO\_INOEUD}. 
 			\item[\texttt{liberer\_blocs\_du\_inoeud}]
+				Tout d'abord, on cherche la position du premier bloc dans l'inoeud, une fois celui-ci trouvé, on parcours \texttt{liens\_directs\_bloc} jusqu'au
+				premier bloc nul, ou la fin de l'inoeud.
+
+				À chaque itération de la boucle, on ajoute un bloc libre dans la liste chaînée, pour cela on écrit dans le fichier le numéro du premier bloc
+				libre à l'emplacement du bloc courant, une fois celui-ci écrit, on met à jour le premier bloc libre qui est égal au bloc courant. \\
+				Ainsi chaque nouveau bloc libre est ajouté en début de liste. Une fois tous les blocs libérés, on met à jour la table des inoeuds et le
+				superbloc.
+
+				\textit{La fonction retourn \texttt{EXIT\_PARAM} si \texttt{premier\_bloc} n'appartient pas à l'inoeud, et \texttt{EXIT\_WRITE\_PB} si un 
+				problème apparaît lors du \texttt{write}.}
 			\item[\texttt{liberer\_inoeud}] Pour libérer un inoeud, il faut appeler la fonction développée précédemment, \texttt{liberer\_blocs\_du\_inoeud},
 				celle-ci libérera tous les blocs de l'inoeud. Une fois les blocs libérés correctement, la taille et le type de l'inoeud sont modifiés. Ensuite il
 				ne faut pas oublier de mettre à jour la table des inoeuds dans le fichier à l'aide de la fonction \texttt{ecrire\_table\_inoeuds}.
 		\end{description}
 	\section{Commandes d'accès au SGF}
-	\subsection{\texttt{ls -l}}
-	\begin{description}
-		\item[\texttt{afficherInoeud}] 
-	\end{description}
-	\subsection{\texttt{du}}
+	\subsection{\texttt{ls -l} (\texttt{mon\_ls.c})}
+	Pour la commande \texttt{ls -l}, peu de modifications ont étés nécessaires. En effet, j'ai créer une nouvelle fonction devant s'occuper de l'affichage
+	d'un inoeud ayant le prototype le suivant:  
+	\begin{lstlisting}[language=C, numbers=none, basicstyle=\ttfamily, caption=Prototype de \texttt{afficherInoeud}]
+void afficherInoeud(int inoeud, char* chemin, int taille);
+	\end{lstlisting}
+	\texttt{inoeud} est le numéro de l'inoeud, \texttt{chemin} le chemin à afficher pour l'inoeud et \texttt{taille} la taille de l'inoeud, si celle-ci est égale
+	à -1, alors elle ne sera pas affichée, cela correspond à un \texttt{ls -l}.
+
+	Ainsi, grâce à cette fonction, la gestion du \texttt{ls -l} devient facile, on vérifie les paramètre grâce à \texttt{argc} et \texttt{argv}, ajouter un
+	paramètre modifie les test de vérifications que la fonction est appelée correctement. Si le \texttt{-l} est omis, alors on passe en paramètre de
+	\texttt{afficherInoeud} \texttt{-1} sinon on lui passe la taille de l'inoeud obtenue dans la table des inoeuds. 
+	\subsection{\texttt{du} (\texttt{mon\_du.c})}
+	La commande \texttt{mon\_du} à été basée sur la commande \texttt{mon\_ls}, ainsi le début des deux fonctions sont très similaires.
+
+	Afin de calculer la taille des répertoires, deux sous-programmes ont été créés, un premier retournant la taille d'un inoeud passé en paramètre, et
+	une deuxième fonction qui calcul la somme du répertoire passé en paramètre et de tous ses fils.
+	\begin{lstlisting}[language=C, numbers=none, basicstyle=\ttfamily, caption=Prototype de \texttt{afficherInoeud}]
+int tailleSousRep(int inoeud, SGF_t* mon_SGF);
+int tailleTotalRepertoire(char* chemin, SGF_t* mon_SGF);
+	\end{lstlisting}
 	\begin{description}
 		\item[\texttt{tailleSousRep}] 
-		\item[\texttt{tailletotalrepertoire}] 
+			Afin de calculer la taille d'un inoeud, il suffit d'utiliser l'attribut \texttt{taille} présent pour chaque inoeud dans la table des inoeuds. Cette
+			fonction permet d'alléger l'écriture du code et de faciliter la compréhension du programme.
+		\item[\texttt{tailletotalrepertoire}]  Ce programme additionne la taille des répertoires de tous ses fils, pour cela, il est appelé récursivement
+			jusqu'à qu'il ne reste que \texttt{.} et \texttt{..} (fond de l'arbre).  Il utilise le sous-programme \texttt{tailleSousRep} à chaque appel de
+			fonction.
+
+			\textit{Le sous-programme peut retourner \texttt{EXIT\_PARAM} si le chemin est inexistant et \texttt{EXIT\_DEVICE} si le SGF est inaccessible}
 	\end{description}
 	\section{Exemples d'exécution}
+	\lstinputlisting[language=sh,stepnumber=5,basicstyle=\scriptsize\ttfamily, caption=Exemple d'utilisation de \texttt{mon\_formater} et \texttt{mon\_afficher}]{mon_formater.sh}
+	\lstinputlisting[language=sh,stepnumber=5,basicstyle=\scriptsize\ttfamily, caption=Exemple d'utilisation de \texttt{mon\_mkdir} et \texttt{mon\_ls}]{mon_mkdir-mon_ls.sh}
+	\lstinputlisting[language=sh,stepnumber=5,basicstyle=\scriptsize\ttfamily, caption=Exemple d'utilisation de \texttt{mon\_rmdir}]{mon_rmdir.sh}
+	\lstinputlisting[language=sh,stepnumber=5,basicstyle=\scriptsize\ttfamily, caption=Exemple d'utilisation de \texttt{mon\_du}]{mon_du.sh}
 \end{document}

@@ -319,6 +319,7 @@ int bloc_libre_suivant ( int num_bloc, SGF_t *mon_SGF) {
 int liberer_blocs_du_inoeud ( int inoeud, int premier_bloc, SGF_t *mon_SGF) {
 	int i;
     assert( mon_SGF != NULL && mon_SGF->superbloc != NULL && mon_SGF->table_inoeuds != NULL);		/* DEBUG*/
+	/*  On cherche la position de premier bloc dans liens_directs_blocs */
 	for(i=0 ; (mon_SGF->table_inoeuds[inoeud].liens_directs_blocs[i] != premier_bloc && i < NB_LIENS_DIRECTS); ++i);
 	if(i >= NB_LIENS_DIRECTS) {
 		fprintf(stderr, "[liberer_blogs_du_inoeud] Impossible de trouver premier_bloc dans inoeud");
